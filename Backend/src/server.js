@@ -4,6 +4,8 @@ const express = require('express');
 const autenticar = require('./middlewares/auth');
 const categoriaRoutes = require('./routes/categoria.routes');
 const authRoutes = require('./routes/auth.routes');
+const fornecedorRoutes = require('./routes/fornecedor.routes');
+const produtoRoutes = require('./routes/produto.routes');
 require('dotenv').config();
 
 const app = express();
@@ -13,7 +15,8 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/categorias', autenticar, categoriaRoutes);
-
+app.use('/api/fornecedores', autenticar, fornecedorRoutes);
+app.use('/api/produtos', autenticar, produtoRoutes);
 app.get('/api/ping', autenticar, (req, res) => {
   res.json({ mensagem: `Ola, ${req.usuario.nome}! Token valido.` });
 });
