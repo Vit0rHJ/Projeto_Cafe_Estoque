@@ -1,3 +1,9 @@
+// server.js: ponto de entrada da API. Cria o app Express, registra os
+// middlewares globais (CORS, parser de JSON) e conecta cada grupo de
+// rotas na sua URL base. As rotas de categorias, fornecedores e produtos
+// passam pelo middleware autenticar — só quem tem um token JWT válido
+// (obtido em /api/auth/login) consegue acessá-las.
+
 const cors = require('cors');
 const express = require('express');
 
@@ -13,7 +19,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // pública: é aqui que se obtém o token
 app.use('/api/categorias', autenticar, categoriaRoutes);
 app.use('/api/fornecedores', autenticar, fornecedorRoutes);
 app.use('/api/produtos', autenticar, produtoRoutes);

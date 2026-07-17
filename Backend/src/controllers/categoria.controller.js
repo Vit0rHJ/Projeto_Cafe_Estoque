@@ -1,3 +1,8 @@
+// categoria.controller.js: CRUD de categorias de produtos (ex.: Limpeza,
+// Congelados, Verduras). Categorias nunca são excluídas de verdade:
+// "desativar" apenas marca ativo = 0, preservando o histórico e evitando
+// quebrar produtos que já referenciam essa categoria (soft delete).
+
 const pool = require('../config/db');
 
 async function listar(req, res) {
@@ -26,6 +31,7 @@ async function criar(req, res) {
     );
     return res.status(201).json({ id: resultado.insertId, nome: nome.trim(), ativo: 1 });
   } catch (err) {
+    // ER_DUP_ENTRY = violou a constraint UNIQUE(nome) no banco (schema.sql).
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ erro: 'Ja existe uma categoria com esse nome' });
     }

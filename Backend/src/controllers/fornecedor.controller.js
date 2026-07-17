@@ -1,5 +1,11 @@
+// fornecedor.controller.js: CRUD de fornecedores, quem entrega/vende os
+// produtos. O campo tipo diferencia uma EMPRESA (entrega programada) de
+// uma compra feita direto no MERCADO. Assim como categorias, fornecedores
+// usam soft delete (ativo = 0) em vez de exclusão definitiva.
+
 const pool = require('../config/db');
 
+// Únicos valores aceitos para o campo tipo (espelha o ENUM do banco em schema.sql).
 const TIPOS_VALIDOS = ['EMPRESA', 'MERCADO'];
 
 async function listar(req, res) {

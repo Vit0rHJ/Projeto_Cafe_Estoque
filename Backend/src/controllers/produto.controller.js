@@ -1,11 +1,21 @@
+// produto.controller.js: CRUD de produtos do estoque. Cada produto
+// pertence a uma categoria e tem uma unidade de medida e um
+// estoque_minimo (usado depois pela view vw_estoque_atual do banco para
+// disparar alerta quando o estoque calculado fica igual ou abaixo desse
+// valor). Repare que o estoque em si não é armazenado aqui — ele é
+// calculado a partir de entradas e saídas (ver database/schema.sql).
+
 const pool = require('../config/db');
 
+// Únicos valores aceitos para o campo unidade (espelha o ENUM do banco em schema.sql).
 const UNIDADES_VALIDAS = ['kg', 'g', 'L', 'ml', 'un', 'pct', 'cx'];
 
 async function listar(req, res) {
   const { categoria_id } = req.query;
 
   try {
+    // Monta a query dinamicamente: o filtro por categoria é opcional
+    // (só entra no SQL/valores se categoria_id vier na querystring).
     let sql = `
       SELECT p.id, p.nome, p.categoria_id, c.nome AS categoria,
              p.unidade, p.estoque_minimo, p.ativo
@@ -69,6 +79,7 @@ async function criar(req, res) {
     return res.status(400).json({ erro: `Unidade deve ser: ${UNIDADES_VALIDAS.join(', ')}` });
   }
 
+  // Se não informado, assume 0 (sem alerta de estoque mínimo).
   const minimo = estoque_minimo === undefined ? 0 : Number(estoque_minimo);
 
   if (isNaN(minimo) || minimo < 0) {
@@ -76,6 +87,8 @@ async function criar(req, res) {
   }
 
   try {
+    // Confere se a categoria existe e está ativa antes de gravar o produto
+    // (o banco também tem FOREIGN KEY, mas aqui já devolvemos um erro claro).
     const [categorias] = await pool.query(
       'SELECT id FROM categorias WHERE id = ? AND ativo = 1',
       [categoria_id]
@@ -120,6 +133,7 @@ async function atualizar(req, res) {
     return res.status(400).json({ erro: `Unidade deve ser: ${UNIDADES_VALIDAS.join(', ')}` });
   }
 
+  // Se não informado, assume 0 (sem alerta de estoque mínimo).
   const minimo = estoque_minimo === undefined ? 0 : Number(estoque_minimo);
 
   if (isNaN(minimo) || minimo < 0) {
@@ -127,6 +141,8 @@ async function atualizar(req, res) {
   }
 
   try {
+    // Confere se a categoria existe e está ativa antes de gravar o produto
+    // (o banco também tem FOREIGN KEY, mas aqui já devolvemos um erro claro).
     const [categorias] = await pool.query(
       'SELECT id FROM categorias WHERE id = ? AND ativo = 1',
       [categoria_id]

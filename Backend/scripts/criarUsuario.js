@@ -1,3 +1,12 @@
+// scripts/: scripts utilitários executados manualmente via linha de
+// comando (fora do fluxo normal da API), geralmente para tarefas
+// administrativas.
+//
+// criarUsuario.js: cadastra um novo usuário direto no banco. Não existe
+// rota HTTP de "criar usuário" de propósito: como todo usuário tem a
+// mesma permissão, abrir isso como endpoint público seria um risco de
+// segurança desnecessário. Uso: npm run criar-usuario "Nome" email@x.com senha123
+
 const bcrypt = require('bcryptjs');
 const pool = require('../src/config/db');
 
@@ -11,6 +20,7 @@ async function main() {
     process.exit(1);
   }
 
+  // Nunca salvar a senha em texto puro: geramos o hash (bcrypt) antes de gravar.
   const senhaHash = await bcrypt.hash(senha, 10);
 
   try {
