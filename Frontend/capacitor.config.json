@@ -1,0 +1,8 @@
+{
+  "appId": "com.cafeestoque.app",
+  "appName": "Cafe_Estoque",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  }
+}
