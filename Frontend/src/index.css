@@ -10,6 +10,16 @@
   --erro: #c0392b;
   --sucesso: #5a8a4c;
   --borda: #d9c9b3;
+
+  --sidebar-bg: #1c1510;
+  --sidebar-texto: #f2e8da;
+  --sidebar-texto-suave: #8f8071;
+  --sidebar-borda: rgba(255, 255, 255, 0.08);
+  --sidebar-ativo-bg: #59481c;
+  --sidebar-ativo-texto: #e8b923;
+
+  --dourado: #e0b23c;
+  --dourado-escuro: #231a12;
 }
 
 * {
@@ -23,4 +33,14 @@ body {
   background-color: var(--creme);
   color: var(--texto);
   line-height: 1.5;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
 }

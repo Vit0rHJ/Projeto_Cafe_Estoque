@@ -70,7 +70,7 @@ CREATE TABLE produtos (
 CREATE TABLE entradas (
   id INT AUTO_INCREMENT PRIMARY KEY,
   fornecedor_id INT NOT NULL,
-  usuario_id INT NOT NULL,               -- quem registrou
+  usuario_id INT NULL,                   -- quem registrou (sistema roda sem login)
   tipo ENUM('ENTREGA','COMPRA_DIRETA') NOT NULL,
   data_entrada DATE NOT NULL,
   foto_nota VARCHAR(255) NULL,           -- caminho do arquivo da foto (opcional)
@@ -138,7 +138,7 @@ CREATE TABLE contagem_itens (
 CREATE TABLE saidas (
   id INT AUTO_INCREMENT PRIMARY KEY,
   produto_id INT NOT NULL,
-  usuario_id INT NOT NULL,
+  usuario_id INT NULL,                   -- quem registrou (sistema roda sem login)
   contagem_id INT NULL,   -- preenchido só quando vem de uma contagem
   tipo ENUM('MANUAL','AJUSTE_CONTAGEM') NOT NULL DEFAULT 'MANUAL',
   quantidade DECIMAL(10,3) NOT NULL,

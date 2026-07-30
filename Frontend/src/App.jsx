@@ -1,47 +1,18 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import RotaPrivada from "./components/RotaPrivada";
-import Layout from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import Produtos from "./pages/Produtos";
+import Categorias from "./pages/Categorias";
+import Fornecedores from "./pages/Fornecedores";
 import "./App.css";
+
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-
-      <Route
-        path="/produtos"
-        element={
-          <RotaPrivada>
-            <Layout>
-              <h1>Produtos (em breve)</h1>
-            </Layout>
-          </RotaPrivada>
-        }
-      />
-
-      <Route
-        path="/categorias"
-        element={
-          <RotaPrivada>
-            <Layout>
-              <h1>Categorias (em breve)</h1>
-            </Layout>
-          </RotaPrivada>
-        }
-      />
-
-      <Route
-        path="/fornecedores"
-        element={
-          <RotaPrivada>
-            <Layout>
-              <h1>Fornecedores (em breve)</h1>
-            </Layout>
-          </RotaPrivada>
-        }
-      />
-
-      <Route path="*" element={<Navigate to="/login" />} />
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/produtos" element={<Produtos />} />
+      <Route path="/categorias" element={<Categorias />} />
+      <Route path="/fornecedores" element={<Fornecedores />} />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

@@ -2,20 +2,16 @@
 
 Sistema de controle de estoque para um café colonial: cadastro de produtos,
 categorias e fornecedores, com registro de entradas (compras/entregas) e
-saídas, e controle de estoque mínimo. Todo usuário logado tem a mesma
-permissão — o login existe para registrar **quem** fez cada ação, não para
-restringir o que pode ser feito.
+saídas, e controle de estoque mínimo. O acesso ao sistema é direto, sem
+necessidade de login.
 
 ## Status atual do projeto
 
 O que já está implementado (back-end):
 
-- **Login com JWT** — autenticação por email/senha, com token usado para
-  proteger o restante da API.
 - **CRUD de categorias** (`/api/categorias`)
 - **CRUD de fornecedores** (`/api/fornecedores`)
 - **CRUD de produtos** (`/api/produtos`), com filtro por categoria
-- **Middleware de autenticação** protegendo as rotas acima
 - **Schema completo do banco** (`Backend/database/schema.sql`), incluindo
   tabelas de entradas, saídas e contagens de estoque, além das views
   `vw_estoque_atual` (estoque calculado + alerta de estoque mínimo) e
@@ -72,23 +68,12 @@ cp .env.example .env   # depois preencha DB_USER, DB_PASSWORD e JWT_SECRET
 npm run dev             # inicia com nodemon em http://localhost:3001
 ```
 
-### 3. Criar um usuário para login
-
-Não há rota pública de cadastro (todo usuário tem a mesma permissão, então
-criar usuário é uma ação administrativa feita direto no servidor):
-
-```bash
-npm run criar-usuario "Seu Nome" seuemail@exemplo.com suaSenha123
-```
-
 ## Endpoints da API
 
-Todas as rotas abaixo, exceto `/api/auth/login`, exigem o header
-`Authorization: Bearer <token>` obtido no login.
+Todas as rotas abaixo são públicas — não é exigido login para acessá-las.
 
 | Método | Rota                    | Descrição                          |
 |--------|--------------------------|-------------------------------------|
-| POST   | `/api/auth/login`        | Autentica e retorna o token JWT     |
 | GET    | `/api/categorias`        | Lista categorias ativas             |
 | POST   | `/api/categorias`        | Cria categoria                      |
 | PUT    | `/api/categorias/:id`    | Atualiza categoria                  |
@@ -102,7 +87,7 @@ Todas as rotas abaixo, exceto `/api/auth/login`, exigem o header
 | POST   | `/api/produtos`          | Cria produto                        |
 | PUT    | `/api/produtos/:id`      | Atualiza produto                    |
 | DELETE | `/api/produtos/:id`      | Desativa produto (soft delete)      |
-| GET    | `/api/ping`              | Testa se o token é válido           |
+| GET    | `/api/ping`              | Testa se a API está no ar           |
 
 ## Próximos passos
 
@@ -110,3 +95,22 @@ Todas as rotas abaixo, exceto `/api/auth/login`, exigem o header
 - Rotas/controllers de saídas e contagens (inventário)
 - Endpoints que exponham `vw_estoque_atual` e `vw_gastos`
 - Início do front-end
+
+
+
+Para rodar o projeto, abra dois terminais separados:
+
+Backend (pasta Backend):
+
+
+cd Backend
+npm install
+npm run dev
+(npm run dev usa nodemon, reiniciando o servidor automaticamente a cada alteração; npm start roda sem watch)
+
+Frontend (pasta Frontend):
+
+
+cd Frontend
+npm install
+npm run dev
