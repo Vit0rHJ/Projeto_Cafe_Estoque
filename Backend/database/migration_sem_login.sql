@@ -9,3 +9,4 @@ USE cafe_estoque;
 
 ALTER TABLE entradas MODIFY usuario_id INT NULL;
 ALTER TABLE saidas MODIFY usuario_id INT NULL;
+ALTER TABLE contagens MODIFY usuario_id INT NULL;

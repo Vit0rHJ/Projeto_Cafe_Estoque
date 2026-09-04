@@ -14,7 +14,7 @@
 #
 # Uso: abra PowerShell na pasta Frontend e rode  .\build-android.ps1
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 $env:ANDROID_HOME = "C:\Users\vitor\Android\Sdk"
 $env:JAVA_HOME = "C:\Users\vitor\jdks\jdk-21.0.12+8"
@@ -27,9 +27,11 @@ $capacitorAndroidDst = "C:\node_modules\@capacitor\android"
 Write-Host "1/5 - Build do site (vite build)..."
 Set-Location $frontendDir
 npm run build
+if ($LASTEXITCODE -ne 0) { throw "vite build falhou (exit $LASTEXITCODE)" }
 
 Write-Host "2/5 - Sincronizando com o projeto Android (cap sync)..."
 npx cap sync android
+if ($LASTEXITCODE -ne 0) { throw "cap sync falhou (exit $LASTEXITCODE)" }
 
 Write-Host "3/5 - Copiando projeto Android para caminho sem acento ($buildDir)..."
 if (Test-Path $buildDir) { Remove-Item $buildDir -Recurse -Force }
@@ -49,6 +51,7 @@ Copy-Item $capacitorAndroidSrc $capacitorAndroidDst -Recurse -Force
 Write-Host "5/5 - Compilando com Gradle..."
 Set-Location $buildDir
 & ".\gradlew.bat" assembleDebug
+if ($LASTEXITCODE -ne 0) { throw "gradlew assembleDebug falhou (exit $LASTEXITCODE)" }
 
 $apk = Join-Path $buildDir "app\build\outputs\apk\debug\app-debug.apk"
 $projetoRoot = Split-Path $frontendDir -Parent

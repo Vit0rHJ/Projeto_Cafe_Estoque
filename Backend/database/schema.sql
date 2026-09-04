@@ -105,7 +105,7 @@ CREATE TABLE entrada_itens (
 -- ---------------------------------------------------
 CREATE TABLE contagens (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  usuario_id INT NOT NULL,
+  usuario_id INT NULL,                   -- quem registrou (sistema roda sem login)
   data_contagem DATE NOT NULL,
   observacao TEXT NULL,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

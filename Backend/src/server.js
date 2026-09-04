@@ -12,6 +12,8 @@ const produtoRoutes = require('./routes/produto.routes');
 const estoqueRoutes = require('./routes/estoque.routes');
 const entradaRoutes = require('./routes/entrada.routes');
 const saidaRoutes = require('./routes/saida.routes');
+const contagemRoutes = require('./routes/contagem.routes');
+const gastoRoutes = require('./routes/gasto.routes');
 require('dotenv').config();
 
 const app = express();
@@ -25,6 +27,8 @@ app.use('/api/produtos', produtoRoutes);
 app.use('/api/estoque', estoqueRoutes);
 app.use('/api/entradas', entradaRoutes);
 app.use('/api/saidas', saidaRoutes);
+app.use('/api/contagens', contagemRoutes);
+app.use('/api/gastos', gastoRoutes);
 app.get('/api/ping', (req, res) => {
   res.json({ mensagem: 'pong' });
 });

@@ -10,25 +10,29 @@ function Dashboard() {
   const [resumo, setResumo] = useState(null);
   const [itensAlerta, setItensAlerta] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
 
   useEffect(() => {
-    async function carregar() {
-      try {
-        const [respResumo, respEstoque] = await Promise.all([
-          api.get('/estoque/resumo'),
-          api.get('/estoque')
-        ]);
-        setResumo(respResumo.data);
-        setItensAlerta(respEstoque.data.filter((item) => item.em_alerta));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setCarregando(false);
-      }
-    }
-
     carregar();
   }, []);
+
+  async function carregar() {
+    setCarregando(true);
+    setErro('');
+    try {
+      const [respResumo, respEstoque] = await Promise.all([
+        api.get('/estoque/resumo'),
+        api.get('/estoque')
+      ]);
+      setResumo(respResumo.data);
+      setItensAlerta(respEstoque.data.filter((item) => item.em_alerta));
+    } catch (err) {
+      console.error(err);
+      setErro('Não foi possível conectar ao servidor. Confira se o backend está rodando e se o celular está na mesma rede Wi-Fi do PC.');
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   return (
     <Layout>
@@ -42,25 +46,32 @@ function Dashboard() {
         </button>
       </div>
 
+      {erro && (
+        <div className="card card-painel" style={{ marginBottom: 20 }}>
+          <p className="form-erro" style={{ marginBottom: 12 }}>{erro}</p>
+          <button className="btn btn-secundario" onClick={carregar}>Tentar de novo</button>
+        </div>
+      )}
+
       <div className="grid-stats">
         <div className="card card-stat">
           <div className="card-label">Total de produtos</div>
-          <div className="card-valor">{carregando ? '—' : resumo.total_produtos}</div>
+          <div className="card-valor">{carregando || !resumo ? '—' : resumo.total_produtos}</div>
         </div>
         <div className="card card-stat">
           <div className="card-label">Valor total em estoque</div>
-          <div className="card-valor">{carregando ? '—' : formatoMoeda.format(resumo.valor_total_estoque)}</div>
+          <div className="card-valor">{carregando || !resumo ? '—' : formatoMoeda.format(resumo.valor_total_estoque)}</div>
         </div>
         <div className="card card-stat">
           <div className="card-label">Estoque baixo</div>
-          <div className={`card-valor${!carregando && resumo.estoque_baixo > 0 ? ' alerta' : ''}`}>
-            {carregando ? '—' : resumo.estoque_baixo}
+          <div className={`card-valor${resumo && resumo.estoque_baixo > 0 ? ' alerta' : ''}`}>
+            {carregando || !resumo ? '—' : resumo.estoque_baixo}
           </div>
         </div>
         <div className="card card-stat">
           <div className="card-label">Categorias / Fornecedores</div>
           <div className="card-valor">
-            {carregando ? '—' : `${resumo.total_categorias} / ${resumo.total_fornecedores}`}
+            {carregando || !resumo ? '—' : `${resumo.total_categorias} / ${resumo.total_fornecedores}`}
           </div>
         </div>
       </div>
