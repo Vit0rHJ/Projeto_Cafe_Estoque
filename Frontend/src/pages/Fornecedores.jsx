@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
-import api from '../services/api';
+import ErroCarregamento from '../components/ErroCarregamento';
+import { IconeEditar, IconeLixeira, IconeMais } from '../components/Icones';
+import api, { avisarEstoqueAtualizado, mensagemDeErro } from '../services/api';
 
 const VAZIO = { nome: '', tipo: 'EMPRESA', telefone: '' };
 
 function Fornecedores() {
   const [fornecedores, setFornecedores] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [erroLista, setErroLista] = useState('');
   const [editando, setEditando] = useState(null);
   const [form, setForm] = useState(VAZIO);
   const [erro, setErro] = useState('');
@@ -15,11 +18,13 @@ function Fornecedores() {
 
   async function carregar() {
     setCarregando(true);
+    setErroLista('');
     try {
       const resp = await api.get('/fornecedores');
       setFornecedores(resp.data);
     } catch (err) {
       console.error(err);
+      setErroLista(mensagemDeErro(err));
     } finally {
       setCarregando(false);
     }
@@ -63,8 +68,9 @@ function Fornecedores() {
       }
       fechar();
       carregar();
+      avisarEstoqueAtualizado();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao salvar fornecedor');
+      setErro(mensagemDeErro(err, 'Erro ao salvar fornecedor'));
     } finally {
       setSalvando(false);
     }
@@ -75,8 +81,9 @@ function Fornecedores() {
     try {
       await api.delete(`/fornecedores/${fornecedor.id}`);
       carregar();
+      avisarEstoqueAtualizado();
     } catch (err) {
-      console.error(err);
+      setErroLista(mensagemDeErro(err, 'Erro ao desativar fornecedor'));
     }
   }
 
@@ -87,14 +94,19 @@ function Fornecedores() {
           <h1>Fornecedores</h1>
           <p>Empresas e mercados de onde vêm os produtos</p>
         </div>
-        <button className="btn btn-dourado" onClick={abrirNovo}>+ Fornecedor</button>
+        <button className="btn btn-dourado" onClick={abrirNovo}>
+          <IconeMais tamanho={16} espessura={2.2} />
+          Novo fornecedor
+        </button>
       </div>
+
+      {erroLista && <ErroCarregamento mensagem={erroLista} onTentar={carregar} />}
 
       <div className="tabela-wrap">
         {carregando ? (
           <div className="estado-vazio">Carregando...</div>
         ) : fornecedores.length === 0 ? (
-          <div className="estado-vazio">Nenhum fornecedor cadastrado.</div>
+          <div className="estado-vazio">{erroLista ? 'Não foi possível carregar os fornecedores.' : 'Nenhum fornecedor cadastrado.'}</div>
         ) : (
           <table>
             <thead>
@@ -112,8 +124,8 @@ function Fornecedores() {
                   <td>{fornecedor.tipo === 'EMPRESA' ? 'Empresa' : 'Mercado'}</td>
                   <td>{fornecedor.telefone || '—'}</td>
                   <td className="acoes">
-                    <button className="btn-icone" onClick={() => abrirEdicao(fornecedor)} title="Editar">✎</button>
-                    <button className="btn-icone" onClick={() => desativar(fornecedor)} title="Desativar">✕</button>
+                    <button className="btn-icone" onClick={() => abrirEdicao(fornecedor)} title="Editar" aria-label="Editar"><IconeEditar tamanho={15} /></button>
+                    <button className="btn-icone" onClick={() => desativar(fornecedor)} title="Desativar" aria-label="Desativar"><IconeLixeira tamanho={16} /></button>
                   </td>
                 </tr>
               ))}

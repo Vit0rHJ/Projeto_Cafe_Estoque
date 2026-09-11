@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import api from '../services/api';
+import ErroCarregamento from '../components/ErroCarregamento';
+import { IconeMais, IconeOlho } from '../components/Icones';
+import api, { avisarEstoqueAtualizado, mensagemDeErro } from '../services/api';
 
 function formatarData(valor) {
   if (!valor) return '—';
@@ -16,6 +18,7 @@ function Contagens() {
   const [tela, setTela] = useState('lista'); // 'lista' | 'nova' | 'detalhe'
   const [contagens, setContagens] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [erroLista, setErroLista] = useState('');
 
   const [produtos, setProdutos] = useState([]);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
@@ -28,14 +31,18 @@ function Contagens() {
 
   const [detalhe, setDetalhe] = useState(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
+  const [erroDetalhe, setErroDetalhe] = useState('');
+  const [contagemAberta, setContagemAberta] = useState(null);
 
   async function carregar() {
     setCarregando(true);
+    setErroLista('');
     try {
       const resp = await api.get('/contagens');
       setContagens(resp.data);
     } catch (err) {
       console.error(err);
+      setErroLista(mensagemDeErro(err));
     } finally {
       setCarregando(false);
     }
@@ -75,7 +82,7 @@ function Contagens() {
       setContados(iniciais);
     } catch (err) {
       console.error(err);
-      setErro('Não foi possível carregar os produtos.');
+      setErro(mensagemDeErro(err, 'Não foi possível carregar os produtos.'));
     } finally {
       setCarregandoProdutos(false);
     }
@@ -90,12 +97,16 @@ function Contagens() {
 
   async function abrirDetalhe(contagem) {
     setTela('detalhe');
+    setContagemAberta(contagem);
+    setDetalhe(null);
+    setErroDetalhe('');
     setCarregandoDetalhe(true);
     try {
       const resp = await api.get(`/contagens/${contagem.id}`);
       setDetalhe(resp.data);
     } catch (err) {
       console.error(err);
+      setErroDetalhe(mensagemDeErro(err));
     } finally {
       setCarregandoDetalhe(false);
     }
@@ -125,8 +136,9 @@ function Contagens() {
         itens
       });
       setResultado(resp.data);
+      avisarEstoqueAtualizado();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao registrar contagem');
+      setErro(mensagemDeErro(err, 'Erro ao registrar contagem'));
     } finally {
       setSalvando(false);
     }
@@ -141,14 +153,19 @@ function Contagens() {
               <h1>Contagens</h1>
               <p>Inventário: compare o estoque físico com o esperado pelo sistema</p>
             </div>
-            <button className="btn btn-dourado" onClick={abrirNova}>+ Nova contagem</button>
+            <button className="btn btn-dourado" onClick={abrirNova}>
+              <IconeMais tamanho={16} espessura={2.2} />
+              Nova contagem
+            </button>
           </div>
+
+          {erroLista && <ErroCarregamento mensagem={erroLista} onTentar={carregar} />}
 
           <div className="tabela-wrap">
             {carregando ? (
               <div className="estado-vazio">Carregando...</div>
             ) : contagens.length === 0 ? (
-              <div className="estado-vazio">Nenhuma contagem registrada ainda.</div>
+              <div className="estado-vazio">{erroLista ? 'Não foi possível carregar as contagens.' : 'Nenhuma contagem registrada ainda.'}</div>
             ) : (
               <table>
                 <thead>
@@ -168,7 +185,7 @@ function Contagens() {
                       <td>{contagem.total_itens}</td>
                       <td className={contagem.total_ajustes > 0 ? 'qtd-baixa' : ''}>{contagem.total_ajustes}</td>
                       <td className="acoes">
-                        <button className="btn-icone" onClick={() => abrirDetalhe(contagem)} title="Ver detalhes">👁</button>
+                        <button className="btn-icone" onClick={() => abrirDetalhe(contagem)} title="Ver detalhes" aria-label="Ver detalhes"><IconeOlho tamanho={17} /></button>
                       </td>
                     </tr>
                   ))}
@@ -253,7 +270,8 @@ function Contagens() {
                               step="0.001"
                               value={contados[produto.id] ?? ''}
                               onChange={(e) => setContados({ ...contados, [produto.id]: e.target.value })}
-                              style={{ width: 110 }}
+                              className="input-tabela"
+                              aria-label={`Quantidade contada de ${produto.nome}`}
                             />
                           </td>
                         </tr>
@@ -284,8 +302,14 @@ function Contagens() {
             <button className="btn btn-secundario" onClick={voltarLista}>Voltar</button>
           </div>
 
+          {erroDetalhe && (
+            <ErroCarregamento mensagem={erroDetalhe} onTentar={() => abrirDetalhe(contagemAberta)} />
+          )}
+
           <div className="tabela-wrap">
-            {carregandoDetalhe || !detalhe ? (
+            {erroDetalhe ? (
+              <div className="estado-vazio">Não foi possível carregar a contagem.</div>
+            ) : carregandoDetalhe || !detalhe ? (
               <div className="estado-vazio">Carregando...</div>
             ) : (
               <table>

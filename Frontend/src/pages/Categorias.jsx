@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
-import api from '../services/api';
+import ErroCarregamento from '../components/ErroCarregamento';
+import { IconeEditar, IconeLixeira, IconeMais } from '../components/Icones';
+import api, { avisarEstoqueAtualizado, mensagemDeErro } from '../services/api';
 
 function Categorias() {
   const [categorias, setCategorias] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [erroLista, setErroLista] = useState('');
   const [editando, setEditando] = useState(null);
   const [nome, setNome] = useState('');
   const [erro, setErro] = useState('');
@@ -13,11 +16,13 @@ function Categorias() {
 
   async function carregar() {
     setCarregando(true);
+    setErroLista('');
     try {
       const resp = await api.get('/categorias');
       setCategorias(resp.data);
     } catch (err) {
       console.error(err);
+      setErroLista(mensagemDeErro(err));
     } finally {
       setCarregando(false);
     }
@@ -61,8 +66,9 @@ function Categorias() {
       }
       fechar();
       carregar();
+      avisarEstoqueAtualizado();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao salvar categoria');
+      setErro(mensagemDeErro(err, 'Erro ao salvar categoria'));
     } finally {
       setSalvando(false);
     }
@@ -73,8 +79,9 @@ function Categorias() {
     try {
       await api.delete(`/categorias/${categoria.id}`);
       carregar();
+      avisarEstoqueAtualizado();
     } catch (err) {
-      console.error(err);
+      setErroLista(mensagemDeErro(err, 'Erro ao desativar categoria'));
     }
   }
 
@@ -85,14 +92,19 @@ function Categorias() {
           <h1>Categorias</h1>
           <p>Organize os produtos por categoria</p>
         </div>
-        <button className="btn btn-dourado" onClick={abrirNova}>+ Categoria</button>
+        <button className="btn btn-dourado" onClick={abrirNova}>
+          <IconeMais tamanho={16} espessura={2.2} />
+          Nova categoria
+        </button>
       </div>
+
+      {erroLista && <ErroCarregamento mensagem={erroLista} onTentar={carregar} />}
 
       <div className="tabela-wrap">
         {carregando ? (
           <div className="estado-vazio">Carregando...</div>
         ) : categorias.length === 0 ? (
-          <div className="estado-vazio">Nenhuma categoria cadastrada.</div>
+          <div className="estado-vazio">{erroLista ? 'Não foi possível carregar as categorias.' : 'Nenhuma categoria cadastrada.'}</div>
         ) : (
           <table>
             <thead>
@@ -106,8 +118,8 @@ function Categorias() {
                 <tr key={categoria.id}>
                   <td>{categoria.nome}</td>
                   <td className="acoes">
-                    <button className="btn-icone" onClick={() => abrirEdicao(categoria)} title="Editar">✎</button>
-                    <button className="btn-icone" onClick={() => desativar(categoria)} title="Desativar">✕</button>
+                    <button className="btn-icone" onClick={() => abrirEdicao(categoria)} title="Editar" aria-label="Editar"><IconeEditar tamanho={15} /></button>
+                    <button className="btn-icone" onClick={() => desativar(categoria)} title="Desativar" aria-label="Desativar"><IconeLixeira tamanho={16} /></button>
                   </td>
                 </tr>
               ))}

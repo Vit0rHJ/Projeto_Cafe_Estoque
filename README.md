@@ -16,7 +16,7 @@ servidor disponível em: http://localhost:3001
 
 para rodar o frontend: cd Frontend npm run dev
 
-frontend disponível em: http://localhost:5173 (se a porta estiver ocupada o vite sobe na próxima livre, ex: 5174 — olhe a URL que aparece no terminal)
+frontend disponível em: http://localhost:5174 (a porta está fixada no Frontend/vite.config.js; se estiver ocupada o vite sobe na próxima livre — olhe a URL que aparece no terminal)
 
 COMO SUBIR O PROJETO DO ZERO:
 
@@ -26,7 +26,7 @@ se o banco JÁ existia de antes (da época do login), rodar também Backend/data
 dentro de Backend, criar um arquivo .env com: PORT=3001 DB_HOST=localhost DB_PORT=3306 DB_USER=root DB_PASSWORD= DB_NAME=cafe_estoque
 cd Backend && npm install && npm run dev
 cd Frontend && npm install && npm run dev
-acessar http://localhost:5173 e usar o sistema direto, sem login.
+acessar http://localhost:5174 e usar o sistema direto, sem login.
 
 BANCO DE DADOS:
 
@@ -135,11 +135,15 @@ exemplo de corpo da contagem: {"data_contagem":"2026-08-26","observacao":"contag
 
 FRONTEND:
 
-react 19 + vite + react router 7 + axios. o css é escrito à mão (index.css com as variáveis de cor do tema café/dourado, e App.css com os componentes visuais), sem framework de estilo.
+react 19 + vite + react router 7 + axios. o css é escrito à mão, sem framework de estilo: index.css guarda as variáveis de cor (amarelo #ffb400 de destaque, fundo cinza-lavanda, cards brancos) e a fonte Inter, e App.css tem todos os componentes visuais. o visual segue um layout de três colunas: barra lateral branca à esquerda com o "perfil" do café, conteúdo no meio com títulos centralizados e cards retos, e um trilho de ícones de navegação à direita. no celular a barra lateral some e o trilho vira uma barra de abas fixa embaixo.
 
-SERVICES/API.JS: instância do axios com a baseURL do backend. a URL vem da variável VITE_API_URL do .env e cai em http://localhost:3001/api quando ela não existe. isso é o que permite o mesmo código funcionar no navegador do PC (localhost) e no app do celular (IP do PC na rede).
+SERVICES/API.JS: instância do axios com a baseURL do backend. no navegador, a URL da api é montada a partir do próprio endereço da página (quem abre em localhost:5174 fala com localhost:3001), então o site não depende do IP do PC e continua funcionando quando você troca de rede wi-fi. só no app do celular (detectado pelo capacitor) é usado o IP fixo da variável VITE_API_URL do .env, porque lá a página é servida pelo próprio app e não dá para deduzir onde está o PC. as requisições têm timeout de 10 segundos: se a api não responder, a tela mostra um aviso em vez de ficar em "carregando" para sempre. o arquivo também exporta mensagemDeErro (transforma o erro do axios em uma mensagem legível) e avisarEstoqueAtualizado (dispara um evento para a barra lateral recarregar os números depois de uma entrada, saída ou contagem).
 
-COMPONENTS/LAYOUT.JSX: sidebar fixa com a marca e o menu, e o conteúdo de cada página renderizado ao lado. cada item do menu tem seu próprio ícone svg escrito na mão no arquivo. o item ativo é destacado pelo NavLink do react router.
+COMPONENTS/LAYOUT.JSX: monta as três colunas. na esquerda fica o "perfil" do café: a bolinha de status (verde = servidor conectado, vermelha = fora do ar), os números do estoque em etiquetas amarelas, as barras de "estoque em dia" (% dos itens acima do mínimo por categoria) e a lista "repor logo" com os itens em alerta. esses dados ficam guardados entre uma página e outra, então a barra não pisca ao navegar. na direita fica o trilho de navegação só com ícones, que mostra o nome da página num balão ao passar o mouse (no celular o nome aparece embaixo do ícone). o item ativo é destacado pelo NavLink do react router.
+
+COMPONENTS/ICONES.JSX: todos os ícones de contorno do sistema, desenhados em svg. a cor vem do css (currentColor), então o mesmo ícone fica amarelo num card e cinza no trilho.
+
+COMPONENTS/ERROCARREGAMENTO.JSX: o aviso com borda vermelha e botão "tentar de novo" que aparece em qualquer página quando a api não responde.
 
 COMPONENTS/MODAL.JSX: modal genérico usado pelos formulários. fecha ao clicar no fundo escuro, e o clique dentro da caixa não propaga para não fechar sem querer.
 
@@ -147,8 +151,8 @@ COMPONENTS/ERRORBOUNDARY.JSX: envolve o app inteiro no main.jsx. se algum compon
 
 PÁGINAS:
 
-Dashboard.jsx: visão geral do estoque, com os cards de total de produtos, valor total em estoque, quantos itens estão com estoque baixo e a contagem de categorias/fornecedores, mais a lista dos itens em alerta. se o backend não responder, mostra um aviso explicando que pode ser o servidor desligado ou o celular fora da mesma rede wi-fi, com botão de tentar de novo.
-Produtos.jsx: lista de produtos com o estoque atual de cada um (destacado em vermelho quando está em alerta). é a tela mais usada no dia a dia: além do cadastro/edição do produto, tem os botões de registrar entrada (+) e registrar saída (−) direto na linha de cada item.
+Dashboard.jsx: página inicial. começa com um destaque (herói) com a ilustração da xícara e o botão de registrar entrada, depois o resumo do estoque (total de produtos, valor em estoque, itens com estoque baixo e categorias/fornecedores), a grade de módulos do sistema (cada card abre uma página) e a lista dos itens em alerta.
+Produtos.jsx: lista de produtos com o estoque atual de cada um (destacado em vermelho quando está em alerta). é a tela mais usada no dia a dia: além do cadastro/edição do produto, tem os botões de registrar entrada (seta para baixo) e registrar saída (seta para cima) direto na linha de cada item. no celular as colunas categoria e mínimo são escondidas para esses botões caberem na tela sem precisar rolar de lado.
 Categorias.jsx: cadastro, edição e desativação de categorias.
 Fornecedores.jsx: cadastro, edição e desativação de fornecedores, separando empresa de mercado.
 Contagens.jsx: o inventário. tem três telas dentro dela: a lista das contagens já feitas (com quantos ajustes cada uma gerou), a tela de nova contagem, que lista todos os produtos ativos já preenchidos com o estoque esperado (a pessoa só corrige o que estiver diferente na prateleira) e ao salvar mostra um resumo dos ajustes que foram gerados, e a tela de detalhe de uma contagem antiga, com esperado x contado x diferença por produto.
@@ -159,7 +163,7 @@ APP NO CELULAR (ANDROID):
 
 o front-end também vira um app android instalável, empacotado com o capacitor, que roda em tela cheia sem barra de navegador. o projeto nativo fica em Frontend/android/ e é o MESMO código react do site, só empacotado.
 
-como o app roda no celular, ele não enxerga o localhost do PC — precisa do IP do PC na rede wi-fi. esse IP fica no Frontend/.env (VITE_API_URL=http://SEU_IP:3001/api, ver Frontend/.env.example). se o IP do PC mudar, atualize esse arquivo antes de gerar o app de novo.
+como o app roda no celular, ele não enxerga o localhost do PC — precisa do IP do PC na rede wi-fi. esse IP fica no Frontend/.env (VITE_API_URL=http://SEU_IP:3001/api, ver Frontend/.env.example). se o IP do PC mudar, atualize esse arquivo antes de gerar o app de novo. esse IP só vale para o app: o site no navegador descobre o endereço sozinho (ver SERVICES/API.JS).
 
 o PC também precisa aceitar conexões de fora na porta 3001, o que normalmente exige liberar a porta no firewall do windows (uma vez só, como administrador): New-NetFirewallRule -DisplayName "Cafe_Estoque Backend" -Direction Inbound -Protocol TCP -LocalPort 3001 -Action Allow -Profile Private
 

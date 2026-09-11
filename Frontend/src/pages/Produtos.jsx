@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
-import api from '../services/api';
+import ErroCarregamento from '../components/ErroCarregamento';
+import { IconeEditar, IconeEntrada, IconeLixeira, IconeMais, IconeSaida } from '../components/Icones';
+import api, { avisarEstoqueAtualizado, mensagemDeErro } from '../services/api';
 
 const UNIDADES = ['kg', 'g', 'L', 'ml', 'un', 'pct', 'cx'];
 const PRODUTO_VAZIO = { nome: '', categoria_id: '', unidade: 'un', estoque_minimo: '0' };
@@ -17,6 +19,7 @@ function Produtos() {
   const [fornecedores, setFornecedores] = useState([]);
   const [estoquePorProduto, setEstoquePorProduto] = useState({});
   const [carregando, setCarregando] = useState(true);
+  const [erroLista, setErroLista] = useState('');
 
   const [modal, setModal] = useState(null); // 'produto' | 'entrada' | 'saida'
   const [editando, setEditando] = useState(null);
@@ -31,6 +34,7 @@ function Produtos() {
 
   async function carregar() {
     setCarregando(true);
+    setErroLista('');
     try {
       const [respProdutos, respCategorias, respFornecedores, respEstoque] = await Promise.all([
         api.get('/produtos'),
@@ -49,6 +53,7 @@ function Produtos() {
       setEstoquePorProduto(mapa);
     } catch (err) {
       console.error(err);
+      setErroLista(mensagemDeErro(err));
     } finally {
       setCarregando(false);
     }
@@ -69,6 +74,12 @@ function Produtos() {
   function fechar() {
     setModal(null);
     setErro('');
+  }
+
+  function depoisDeSalvar() {
+    fechar();
+    carregar();
+    avisarEstoqueAtualizado();
   }
 
   function abrirNovoProduto() {
@@ -110,10 +121,9 @@ function Produtos() {
       } else {
         await api.post('/produtos', produtoForm);
       }
-      fechar();
-      carregar();
+      depoisDeSalvar();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao salvar produto');
+      setErro(mensagemDeErro(err, 'Erro ao salvar produto'));
     } finally {
       setSalvando(false);
     }
@@ -124,8 +134,9 @@ function Produtos() {
     try {
       await api.delete(`/produtos/${produto.id}`);
       carregar();
+      avisarEstoqueAtualizado();
     } catch (err) {
-      console.error(err);
+      setErroLista(mensagemDeErro(err, 'Erro ao desativar produto'));
     }
   }
 
@@ -162,10 +173,9 @@ function Produtos() {
         preco_unitario: entradaForm.preco_unitario,
         tipo: entradaForm.tipo
       });
-      fechar();
-      carregar();
+      depoisDeSalvar();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao registrar entrada');
+      setErro(mensagemDeErro(err, 'Erro ao registrar entrada'));
     } finally {
       setSalvando(false);
     }
@@ -194,10 +204,9 @@ function Produtos() {
         quantidade: saidaForm.quantidade,
         observacao: saidaForm.observacao || undefined
       });
-      fechar();
-      carregar();
+      depoisDeSalvar();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao registrar saida');
+      setErro(mensagemDeErro(err, 'Erro ao registrar saida'));
     } finally {
       setSalvando(false);
     }
@@ -208,24 +217,29 @@ function Produtos() {
       <div className="pagina-header">
         <div>
           <h1>Produtos</h1>
-          <p>Itens controlados no estoque</p>
+          <p>Itens controlados no estoque. Use as setas de cada linha para registrar o que chegou e o que saiu.</p>
         </div>
-        <button className="btn btn-dourado" onClick={abrirNovoProduto}>+ Produto</button>
+        <button className="btn btn-dourado" onClick={abrirNovoProduto}>
+          <IconeMais tamanho={16} espessura={2.2} />
+          Novo produto
+        </button>
       </div>
+
+      {erroLista && <ErroCarregamento mensagem={erroLista} onTentar={carregar} />}
 
       <div className="tabela-wrap">
         {carregando ? (
           <div className="estado-vazio">Carregando...</div>
         ) : produtos.length === 0 ? (
-          <div className="estado-vazio">Nenhum produto cadastrado.</div>
+          <div className="estado-vazio">{erroLista ? 'Não foi possível carregar os produtos.' : 'Nenhum produto cadastrado.'}</div>
         ) : (
           <table>
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Categoria</th>
+                <th className="col-opcional">Categoria</th>
                 <th>Estoque atual</th>
-                <th>Mínimo</th>
+                <th className="col-opcional">Mínimo</th>
                 <th></th>
               </tr>
             </thead>
@@ -238,14 +252,22 @@ function Produtos() {
                 return (
                   <tr key={produto.id}>
                     <td>{produto.nome}</td>
-                    <td>{produto.categoria}</td>
+                    <td className="col-opcional">{produto.categoria}</td>
                     <td className={emAlerta ? 'qtd-baixa' : ''}>{atual} {produto.unidade}</td>
-                    <td>{produto.estoque_minimo} {produto.unidade}</td>
+                    <td className="col-opcional">{produto.estoque_minimo} {produto.unidade}</td>
                     <td className="acoes">
-                      <button className="btn-icone" onClick={() => abrirEntrada(produto)} title="Registrar entrada">+</button>
-                      <button className="btn-icone" onClick={() => abrirSaida(produto)} title="Registrar saída">−</button>
-                      <button className="btn-icone" onClick={() => abrirEdicaoProduto(produto)} title="Editar">✎</button>
-                      <button className="btn-icone" onClick={() => desativarProduto(produto)} title="Desativar">✕</button>
+                      <button className="btn-icone" onClick={() => abrirEntrada(produto)} title="Registrar entrada" aria-label="Registrar entrada">
+                        <IconeEntrada tamanho={17} />
+                      </button>
+                      <button className="btn-icone" onClick={() => abrirSaida(produto)} title="Registrar saída" aria-label="Registrar saída">
+                        <IconeSaida tamanho={17} />
+                      </button>
+                      <button className="btn-icone" onClick={() => abrirEdicaoProduto(produto)} title="Editar" aria-label="Editar">
+                        <IconeEditar tamanho={15} />
+                      </button>
+                      <button className="btn-icone" onClick={() => desativarProduto(produto)} title="Desativar" aria-label="Desativar">
+                        <IconeLixeira tamanho={16} />
+                      </button>
                     </td>
                   </tr>
                 );
@@ -272,12 +294,18 @@ function Produtos() {
               <select
                 value={produtoForm.categoria_id}
                 onChange={(e) => setProdutoForm({ ...produtoForm, categoria_id: e.target.value })}
+                disabled={carregando}
               >
-                <option value="">Selecione...</option>
+                <option value="">{carregando ? 'Carregando categorias...' : 'Selecione...'}</option>
                 {categorias.map((categoria) => (
                   <option key={categoria.id} value={categoria.id}>{categoria.nome}</option>
                 ))}
               </select>
+              {!carregando && categorias.length === 0 && (
+                <span className="campo-dica">
+                  {erroLista ? 'As categorias não carregaram (veja o aviso na página).' : 'Nenhuma categoria cadastrada. Crie uma na página Categorias.'}
+                </span>
+              )}
             </div>
             <div className="campo-linha">
               <div className="campo">
@@ -327,6 +355,9 @@ function Produtos() {
                   <option key={fornecedor.id} value={fornecedor.id}>{fornecedor.nome}</option>
                 ))}
               </select>
+              {fornecedores.length === 0 && (
+                <span className="campo-dica">Nenhum fornecedor cadastrado. Crie um na página Fornecedores.</span>
+              )}
             </div>
             <div className="campo-linha">
               <div className="campo">
