@@ -634,6 +634,13 @@ a.card-servico:focus-visible {
   flex: 1;
   min-width: 220px;
   font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.aviso-erro-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* ============================================================

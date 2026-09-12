@@ -13,6 +13,16 @@
 #     C:\Users\vitor\Android\Sdk
 #
 # Uso: abra PowerShell na pasta Frontend e rode  .\build-android.ps1
+#
+# O app precisa saber o IP do PC para achar o backend. O script descobre
+# sozinho (a placa de rede que está com a internet, normalmente o Wi-Fi) e
+# grava no app. Para forçar outro IP:  .\build-android.ps1 -Ip 192.168.0.10
+# Depois de instalado, dá para trocar o IP pelo próprio app (botão "Trocar IP"
+# que aparece quando ele não consegue conectar).
+
+param(
+    [string]$Ip
+)
 
 $ErrorActionPreference = "Continue"
 
@@ -23,6 +33,18 @@ $frontendDir = $PSScriptRoot
 $buildDir = "C:\abuild"
 $capacitorAndroidSrc = Join-Path $frontendDir "node_modules\@capacitor\android"
 $capacitorAndroidDst = "C:\node_modules\@capacitor\android"
+
+if (-not $Ip) {
+    $rota = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1
+    if ($rota) {
+        $Ip = (Get-NetIPAddress -InterfaceIndex $rota.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1).IPAddress
+    }
+}
+if (-not $Ip) { throw "Nao consegui descobrir o IP do PC. Rode de novo informando: .\build-android.ps1 -Ip 192.168.0.10" }
+
+# Variável de ambiente tem prioridade sobre o Frontend/.env no vite build.
+$env:VITE_API_URL = "http://${Ip}:3001/api"
+Write-Host "API que o app vai usar: $env:VITE_API_URL"
 
 Write-Host "1/5 - Build do site (vite build)..."
 Set-Location $frontendDir
@@ -59,5 +81,8 @@ $desktop = Split-Path $projetoRoot -Parent
 $destino = Join-Path $desktop "Cafe_Estoque.apk"
 Copy-Item $apk $destino -Force
 
+Remove-Item Env:VITE_API_URL -ErrorAction SilentlyContinue
+
 Write-Host ""
 Write-Host "APK gerado em: $destino"
+Write-Host "O app vai procurar o backend em http://${Ip}:3001/api"
